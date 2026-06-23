@@ -574,7 +574,7 @@
             <div class="result-row"><span class="result-label">Valor da Conversão (BRL)</span><span class="result-value" id="bConv">—</span></div>
             <div class="result-row"><span class="result-label">IOF (3,5%)</span><span class="result-value red" id="bIof">—</span></div>
             <div class="result-row"><span class="result-label">Custo Total (%)</span><span class="result-value red" id="bCustoP">—</span></div>
-            <div class="result-row"><span class="result-label">Valor Depositado ↓</span><span class="result-value highlight" id="bDep">—</span></div>
+            <div class="result-row"><span class="result-label">Valor da Transação c/ Custos ↑</span><span class="result-value highlight" id="bDep">—</span></div>
           </div>
           <div class="result-card tensec" id="cardTensec">
             <div class="result-card-title">Tensec</div>
@@ -584,7 +584,7 @@
             <div class="result-row"><span class="result-label">Valor da Conversão (BRL)</span><span class="result-value" id="tConv">—</span></div>
             <div class="result-row"><span class="result-label">FxFee (1,5%)</span><span class="result-value red" id="tFxFee">—</span></div>
             <div class="result-row"><span class="result-label">Custo Total (%)</span><span class="result-value red" id="tCustoP">—</span></div>
-            <div class="result-row"><span class="result-label">Valor Depositado ↓</span><span class="result-value highlight green" id="tDep">—</span></div>
+            <div class="result-row"><span class="result-label">Valor da Transação c/ Custos ↑</span><span class="result-value highlight green" id="tDep">—</span></div>
           </div>
         </div>
 
@@ -832,18 +832,18 @@
       // Banco
       const taxaB   = spot * (1 + spB);
       const convB   = usd * taxaB;
-      const custoTB = spB + IOF;       // 4%
-      const depB    = usd * spot * (1 - custoTB);
+      const custoTB = spB + IOF;              // ilustrativo
+      const depB    = convB * (1 + IOF);      // valor da transação com custos totais
 
       // Tensec
       const taxaT   = spot * (1 + spT);
       const convT   = usd * taxaT;
-      const custoTT = spT + FXFEE;     // 2.5%
-      const depT    = usd * spot * (1 - custoTT);
+      const custoTT = spT + FXFEE;            // ilustrativo
+      const depT    = convT * (1 + FXFEE);    // valor da transação com custos totais
 
-      // delta
-      const delta   = depT - depB;     // positivo = Tensec melhor
-      const deltaPctVal = delta / depB;
+      // delta — lower transaction cost = better for client
+      const delta       = depB - depT;        // positive = Tensec cheaper
+      const deltaPctVal = depB > 0 ? delta / depB : 0;
 
       // Receita Banco (com impostos ~12% RJ)
       const recBBruta = (usd * spot * spB) * REVSH;

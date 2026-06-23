@@ -108,28 +108,39 @@
     .spot-badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       margin-top: 10px;
       background: rgba(255,255,255,0.10);
       border: 1px solid rgba(255,255,255,0.15);
       border-radius: 9999px;
-      padding: 4px 12px;
+      padding: 4px 14px;
       font-size: 12px;
       font-weight: 600;
       letter-spacing: 0.02em;
     }
-    .spot-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: #22C55E;
-      flex-shrink: 0;
-      animation: pulse 2s ease-in-out infinite;
+    .market-status {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: 4px;
+      padding: 2px 7px;
+      border-left: 1px solid rgba(255,255,255,0.2);
+      margin-left: 4px;
+      padding-left: 10px;
     }
-    @keyframes pulse {
-      0%,100% { opacity:1; transform:scale(1); }
-      50%      { opacity:0.6; transform:scale(1.3); }
+    .market-status.online {
+      color: #22C55E;
+      animation: textPulse 2s ease-in-out infinite;
     }
-    .spot-dot.offline { background: #EF4444; animation: none; }
+    .market-status.offline {
+      color: #EF4444;
+      animation: none;
+    }
+    @keyframes textPulse {
+      0%,100% { opacity:1; }
+      50%      { opacity:0.4; }
+    }
 
     /* === BODY === */
     .card-body {
@@ -387,15 +398,95 @@
       to   { opacity:1; transform:translateY(0); }
     }
 
+    /* === SPREAD BREAKDOWN PANELS === */
+    .spread-panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .spread-panel {
+      background: var(--bg-section);
+      border: 1.5px solid var(--border-color);
+      border-radius: 5px;
+      padding: 14px 16px;
+    }
+    .spread-panel.tensec { border-color: rgba(20,53,195,0.3); background: linear-gradient(135deg,#EEF3FF 0%,#F5F0FF 100%); }
+    .spread-panel-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted-grey);
+      margin-bottom: 10px;
+    }
+    .spread-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      font-size: 12px;
+    }
+    .spread-line .sk { color: var(--muted-grey); font-weight: 500; }
+    .spread-line .sv { font-weight: 700; font-family: var(--font-heading); font-size: 13px; }
+    .spread-line .sv.editable {
+      background: #fff;
+      border: 1.5px solid var(--border-color);
+      border-radius: 4px;
+      padding: 2px 8px;
+      min-width: 70px;
+      text-align: right;
+      font-size: 13px;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      color: var(--almost-black);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .spread-line .sv.editable:focus { border-color: var(--primary-blue); }
+    .spread-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0 2px;
+      margin-top: 4px;
+      border-top: 1.5px solid var(--border-color);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .spread-total .st-label { color: var(--almost-black); }
+    .spread-total .st-val { font-family: var(--font-heading); color: var(--primary-blue); font-size: 14px; font-weight: 700; }
+
+    /* === MAIS LUCRO BOX === */
+    .mais-lucro-box {
+      background: linear-gradient(135deg, rgba(34,197,94,0.08) 0%, rgba(20,53,195,0.08) 100%);
+      border: 1.5px solid rgba(34,197,94,0.35);
+      border-radius: 5px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .mais-lucro-label { font-size: 13px; font-weight: 600; color: var(--almost-black); }
+    .mais-lucro-sub { font-size: 11px; color: var(--muted-grey); margin-top: 2px; }
+    .mais-lucro-value {
+      font-family: var(--font-heading);
+      font-size: 20px;
+      font-weight: 700;
+      color: #16A34A;
+    }
+
     @media (max-width: 580px) {
-      .cols, .receita-cols { grid-template-columns: 1fr; }
+      .spread-panels, .cols, .receita-cols { grid-template-columns: 1fr; }
       .card-body { padding: 20px 18px 24px; }
       .card-header { padding: 20px 18px 18px; }
       .card-footer { flex-direction: column; align-items: flex-start; gap: 4px; }
       .input-group { flex-direction: column; }
     }
   </style>
-</head>
 <body>
 <div class="page">
   <!-- HEADER -->
@@ -411,29 +502,57 @@
       <h1>Simulador Racional de Câmbio</h1>
       <p>Compare o custo real entre Outros Bancos e Tensec para operações de câmbio USD → BRL</p>
       <div class="spot-badge">
-        <span class="spot-dot" id="spotDot"></span>
         <span id="spotLabel">Dólar Spot: <strong id="spotVal">—</strong></span>
+        <span class="market-status online" id="marketStatus">ONLINE</span>
       </div>
     </div>
 
     <!-- CARD BODY -->
     <div class="card-body">
       <!-- INPUTS -->
-      <div class="input-group">
+      <div class="input-group" style="margin-bottom:16px;">
         <div class="field">
           <label>Valor em USD</label>
           <div style="position:relative;">
             <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:700;color:var(--muted-grey);pointer-events:none;user-select:none;">USD</span>
-            <input type="text" id="usdInput" value="100.000" readonly style="padding-left:46px;background:#F4F5FA;cursor:default;color:var(--muted-grey);">
+            <input type="text" id="usdInput" value="100.000" style="padding-left:46px;">
           </div>
         </div>
-        <div class="field">
-          <label>Spread Outros Bancos (%)</label>
-          <input type="text" id="spreadBancoInput" placeholder="0,50%" value="0,50%">
+      </div>
+
+      <!-- SPREAD BREAKDOWN PANELS -->
+      <div class="spread-panels">
+        <!-- Outros Bancos -->
+        <div class="spread-panel">
+          <div class="spread-panel-title">Outros Bancos</div>
+          <div class="spread-line">
+            <span class="sk">Spread (%)</span>
+            <input type="text" class="sv editable" id="spreadBancoInput" value="0,50%" autocomplete="off">
+          </div>
+          <div class="spread-line">
+            <span class="sk">+ IOF (%)</span>
+            <span class="sv">3,50%</span>
+          </div>
+          <div class="spread-total">
+            <span class="st-label">= Custo Total (%)</span>
+            <span class="st-val" id="custoTotalBanco">4,00%</span>
+          </div>
         </div>
-        <div class="field">
-          <label>Spread Tensec (%)</label>
-          <input type="text" id="spreadTensecInput" placeholder="1,00%" value="1,00%">
+        <!-- Tensec -->
+        <div class="spread-panel tensec">
+          <div class="spread-panel-title">Tensec</div>
+          <div class="spread-line">
+            <span class="sk">Spread (%)</span>
+            <input type="text" class="sv editable" id="spreadTensecInput" value="1,00%" autocomplete="off">
+          </div>
+          <div class="spread-line">
+            <span class="sk">+ FxFee (%)</span>
+            <span class="sv">1,50%</span>
+          </div>
+          <div class="spread-total">
+            <span class="st-label">= Custo Total (%)</span>
+            <span class="st-val" id="custoTotalTensec">2,50%</span>
+          </div>
         </div>
       </div>
 
@@ -472,7 +591,7 @@
         <!-- DELTA -->
         <div class="delta-box" id="deltaBox">
           <div>
-            <div class="delta-label">Economia com Tensec</div>
+            <div class="delta-label" id="deltaLabel">Economia com Tensec</div>
             <div style="font-size:11px;color:var(--muted-grey);margin-top:2px" id="deltaPct">—</div>
           </div>
           <div class="delta-value" id="deltaVal">R$ —</div>
@@ -505,6 +624,30 @@
           </div>
         </div>
         <div style="font-size:10px;color:var(--muted-grey);margin-top:6px;">*Isenção fiscal sujeita a regulamentação vigente. Confirmar com equipe de compliance.</div>
+
+        <!-- MAIS LUCRO BOX -->
+        <div class="mais-lucro-box" id="maisLucroBox">
+          <div style="width:100%">
+            <div class="mais-lucro-label" style="margin-bottom:12px;">💰 Mais Lucro com a Tensec</div>
+            <div style="display:flex;flex-direction:column;gap:5px;font-size:13px;">
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:var(--muted-grey);font-weight:500;">Receita Líquida Outros Bancos</span>
+                <span style="font-family:var(--font-heading);font-weight:700;" id="mlRecBanco">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:var(--muted-grey);font-weight:500;">Receita Líquida Tensec</span>
+                <span style="font-family:var(--font-heading);font-weight:700;color:var(--primary-blue);" id="mlRecTensec">—</span>
+              </div>
+              <div style="border-top:1.5px solid rgba(34,197,94,0.3);margin-top:4px;padding-top:8px;display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <span style="font-weight:700;color:var(--almost-black);">Diferença total</span>
+                  <span style="margin-left:8px;font-size:12px;color:#16A34A;font-weight:700;" id="mlDifPct">—</span>
+                </div>
+                <span class="mais-lucro-value" id="mlDifVal">R$ —</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -600,7 +743,8 @@
     // all sources failed
     spotRate = 5.2233;
     document.getElementById('spotVal').textContent = 'R$ ' + fmt(spotRate, 4) + ' (fallback)';
-    document.getElementById('spotDot').classList.add('offline');
+    const ms = document.getElementById('marketStatus');
+    ms.textContent = 'OFFLINE'; ms.className = 'market-status offline';
   }
 
   function isMarketOpen() {
@@ -625,19 +769,47 @@
   }
 
   function updateSpotDot() {
-    const dot = document.getElementById('spotDot');
+    const ms = document.getElementById('marketStatus');
     const label = document.getElementById('spotLabel');
+    const val = spotRate ? 'R$ ' + fmt(spotRate, 4) : '—';
     if (isMarketOpen()) {
-      dot.classList.remove('offline');
-      if (label) label.innerHTML = 'Dólar Spot: <strong id="spotVal">' + (spotRate ? 'R$ ' + fmt(spotRate, 4) : '—') + '</strong>';
+      ms.textContent = 'ONLINE';
+      ms.className = 'market-status online';
+      if (label) label.innerHTML = 'Dólar Spot: <strong id="spotVal">' + val + '</strong>';
     } else {
-      dot.classList.add('offline');
-      if (label) label.innerHTML = 'Dólar Spot: <strong id="spotVal">' + (spotRate ? 'R$ ' + fmt(spotRate, 4) + ' (mercado fechado)' : '—') + '</strong>';
+      ms.textContent = 'OFFLINE — Mercado Fechado';
+      ms.className = 'market-status offline';
+      if (label) label.innerHTML = 'Dólar Spot: <strong id="spotVal">' + val + '</strong>';
     }
   }
 
-  // ── USD is fixed (read-only display) ─────────────────────────
-  const rawUSD = 100000;
+  // ── USD input ────────────────────────────────────────────────
+  let rawUSD = 100000;
+  const usdEl = document.getElementById('usdInput');
+
+  function parseUSD(s) {
+    s = s.replace(/[^\d.,]/g, '').trim();
+    // BR format: has dot before comma → thousands separator
+    if (s.indexOf('.') >= 0 && s.indexOf(',') > s.indexOf('.')) {
+      s = s.replace(/\./g,'').replace(',','.');
+    } else {
+      // just strip dots used as thousands (no comma): "100.000" → 100000
+      s = s.replace(/\./g,'').replace(',','.');
+    }
+    return parseFloat(s) || 100000;
+  }
+
+  usdEl.addEventListener('focus', () => {
+    usdEl.value = '';
+  });
+  usdEl.addEventListener('blur', () => {
+    rawUSD = parseUSD(usdEl.value);
+    usdEl.value = rawUSD.toLocaleString('pt-BR', {maximumFractionDigits:0});
+    calcular();
+  });
+  usdEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); usdEl.blur(); }
+  });
 
   // ── calculate ────────────────────────────────────────────────
   function calcular() {
@@ -648,7 +820,7 @@
       btn.classList.remove('loading');
 
       const spot  = spotRate || 5.2233;
-      const usd   = rawUSD || parseNum(document.getElementById('usdInput').value) || 100000;
+      const usd   = rawUSD || 100000;
       const spB   = getSpread('spreadBancoInput');
       const spT   = getSpread('spreadTensecInput');
 
@@ -699,10 +871,15 @@
       document.getElementById('tDep').textContent     = fmtBRL(depT);
 
       document.getElementById('deltaVal').textContent = fmtBRL(Math.abs(delta));
-      document.getElementById('deltaPct').textContent =
-        delta >= 0
-          ? 'Cliente economiza ' + fmt(Math.abs(deltaPctVal*100),2) + '% a menos com Tensec'
-          : 'Cliente paga ' + fmt(Math.abs(deltaPctVal*100),2) + '% a mais com Tensec';
+      const deltaSign = delta >= 0;
+      document.getElementById('deltaLabel').textContent = deltaSign ? 'Economia com Tensec' : 'Custo adicional com Tensec';
+      document.getElementById('deltaPct').textContent = deltaSign
+        ? 'O cliente economiza ' + fmt(Math.abs(deltaPctVal*100),2) + '% com a Tensec, no valor de'
+        : 'O cliente paga ' + fmt(Math.abs(deltaPctVal*100),2) + '% a mais com a Tensec, no valor de';
+
+      // Custo total panels
+      document.getElementById('custoTotalBanco').textContent  = pct(custoTB);
+      document.getElementById('custoTotalTensec').textContent = pct(custoTT);
 
       document.getElementById('rBSpread').textContent  = pct(spB);
       document.getElementById('rBBruta').textContent   = fmtBRL(recBBruta);
@@ -712,6 +889,18 @@
       document.getElementById('rTSpread').textContent  = pct(spT);
       document.getElementById('rTBruta').textContent   = fmtBRL(recTBruta);
       document.getElementById('rTLiq').textContent     = fmtBRL(recTLiq);
+
+      // Mais Lucro box
+      const maisLucro = recTLiq - recBLiq;
+      const maisLucroPct = recBLiq > 0 ? maisLucro / recBLiq : 0;
+      const maisLucroPos = Math.max(0, maisLucro);
+      const maisLucroPctPos = Math.max(0, maisLucroPct);
+      document.getElementById('mlRecBanco').textContent  = fmtBRL(recBLiq);
+      document.getElementById('mlRecTensec').textContent = fmtBRL(recTLiq);
+      document.getElementById('mlDifVal').textContent    = fmtBRL(maisLucroPos);
+      document.getElementById('mlDifPct').textContent    = maisLucroPos > 0
+        ? '+' + fmt(maisLucroPctPos * 100, 2) + '% a mais com Tensec!'
+        : '0,00% de diferença';
 
       // show results
       const res = document.getElementById('results');
@@ -734,23 +923,34 @@
     }
 
     el.addEventListener('focus', () => {
-      // show just the numeric % for editing, e.g. "0,50"
-      el.value = spreadState[id].toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:4});
+      el.value = '';
     });
 
     el.addEventListener('blur', () => {
-      // parse what user typed as a plain % number (e.g. "0,50" → 0.5, "50" → 50)
+      // parse what user typed as a plain % number
+      // "1,3" → 1.3   "1.3" → 1.3   "1.300" → 1.3 (dot as decimal)
+      // "1.300,50" → 1300.50 (BR thousands format — unlikely for spreads but handled)
       let s = el.value.replace(/%/g, '').trim();
-      // normalize BR format
-      if (s.indexOf(',') > s.indexOf('.') && s.indexOf('.') >= 0) {
+      if (s.indexOf(',') >= 0 && s.indexOf('.') >= 0 && s.indexOf(',') > s.indexOf('.')) {
+        // BR thousands: "1.300,50"
         s = s.replace(/\./g,'').replace(',','.');
       } else {
-        s = s.replace(/[^\d.]/g,'');
+        // lone comma = decimal: "1,3" → "1.3"
+        s = s.replace(',','.').replace(/[^\d.]/g,'');
       }
       const n = parseFloat(s);
       spreadState[id] = isNaN(n) ? defaultPct : n;
       showFormatted();
+      // update custo total panels live before full calc
+      const spB = getSpread('spreadBancoInput');
+      const spT = getSpread('spreadTensecInput');
+      document.getElementById('custoTotalBanco').textContent  = pct(spB + 0.035);
+      document.getElementById('custoTotalTensec').textContent = pct(spT + 0.015);
       calcular();
+    });
+
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
     });
 
     showFormatted();
